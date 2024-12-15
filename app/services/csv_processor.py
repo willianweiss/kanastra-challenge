@@ -8,7 +8,7 @@ from datetime import datetime
 import uuid
 from app.utils.logging import logger
 
-BATCH_SIZE = 100000
+BATCH_SIZE = 10000
 MAX_WORKERS = 1000
 
 async def save_to_database(content: bytes, table_name: str, pool):

@@ -5,7 +5,7 @@ python-multipart
 pydantic-settings
 pydantic[email]
 psycopg2-binary
-aioredis
+sqlalchemy
 asyncpg
 uvicorn
 sendgrid
