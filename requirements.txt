@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-dotenv
+python-multipart
+pydantic-settings
+pydantic[email]
+psycopg2-binary
+aioredis
+asyncpg
+uvicorn
+sendgrid
+black
+isort
