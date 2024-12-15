@@ -8,10 +8,9 @@ from datetime import datetime
 import uuid
 from app.utils.logging import logger
 
-BATCH_SIZE = 10000  # Maior batch para menos consultas ao banco
+BATCH_SIZE = 100000
 MAX_WORKERS = 1000
 
-# CSV Processor com pool ajustado
 async def save_to_database(content: bytes, table_name: str, pool):
     """
     Insere dados do CSV diretamente no banco usando asyncpg e um pool de conexões.
@@ -53,8 +52,6 @@ async def save_to_database(content: bytes, table_name: str, pool):
         logger.error(f"Error while saving data: {e}")
         raise
 
-  # Número maior de workers para maior paralelismo
-
 async def process_csv_file(pool):
     """
     Processa dívidas em status PENDING em batches usando asyncio.
@@ -62,7 +59,6 @@ async def process_csv_file(pool):
     logger.info("Starting debt processing...")
 
     async with pool.acquire() as conn:
-        # Pré-carrega todos os registros PENDING, se possível
         debts = await conn.fetch(
             "SELECT * FROM debt WHERE status = $1", DebtStatus.PENDING.value
         )
@@ -72,10 +68,8 @@ async def process_csv_file(pool):
         logger.info("No pending debts to process. Exiting.")
         return
 
-    # Cria batches para processamento
     batches = [debts[i:i + BATCH_SIZE] for i in range(0, len(debts), BATCH_SIZE)]
 
-    # Processa cada batch em paralelo
     for batch in batches:
         await process_batch(batch, pool)
 
@@ -87,11 +81,9 @@ async def process_batch(batch, pool):
     """
     semaphore = asyncio.Semaphore(MAX_WORKERS)
 
-    # Cria tarefas para processamento de dívidas
     tasks = [process_debt(debt, semaphore, pool) for debt in batch]
     await asyncio.gather(*tasks)
 
-    # Atualiza status em batch
     async with pool.acquire() as conn:
         debt_ids = [str(debt["debt_id"]) for debt in batch]
         await conn.executemany(
@@ -120,7 +112,6 @@ async def process_debt(debt, semaphore, pool):
         except Exception as e:
             logger.error(f"Error processing debt ID {debt['debt_id']}: {e}")
 
-            # Marca como FAILED
             async with pool.acquire() as conn:
                 await conn.execute(
                     "UPDATE debt SET status = $1 WHERE debt_id = $2",
