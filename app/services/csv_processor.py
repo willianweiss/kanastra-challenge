@@ -1,56 +1,11 @@
 import asyncio
-import csv
-from io import StringIO
 from app.db.models import DebtStatus
 from app.services.boleto_service import generate_boleto
 from app.services.email_service import send_email
-from datetime import datetime
-import uuid
 from app.utils.logging import logger
 
 BATCH_SIZE = 10000
 MAX_WORKERS = 1000
-
-async def save_to_database(content: bytes, table_name: str, pool):
-    """
-    Insere dados do CSV diretamente no banco usando asyncpg e um pool de conexões.
-
-    Args:
-        content (bytes): Conteúdo do arquivo CSV.
-        table_name (str): Nome da tabela no banco.
-    """
-    logger.info("Saving data to the database...")
-    reader = csv.DictReader(StringIO(content.decode("utf-8")))
-    debts = [
-        (
-            uuid.UUID(row["debtId"]),
-            row["name"],
-            row["governmentId"],
-            row["email"],
-            float(row["debtAmount"]),
-            datetime.strptime(row["debtDueDate"], "%Y-%m-%d").date(),
-            "PENDING",
-        )
-        for row in reader
-    ]
-
-    try:
-        async with pool.acquire() as conn:
-            query = f"""
-                INSERT INTO {table_name} 
-                (debt_id, name, government_id, email, debt_amount, debt_due_date, status)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                ON CONFLICT (debt_id) DO NOTHING
-            """
-            for i in range(0, len(debts), BATCH_SIZE):
-                batch = debts[i:i + BATCH_SIZE]
-                await conn.executemany(query, batch)
-                logger.info(f"Inserted batch {i // BATCH_SIZE + 1}, size: {len(batch)}")
-
-        logger.info("Data successfully saved to the database.")
-    except Exception as e:
-        logger.error(f"Error while saving data: {e}")
-        raise
 
 async def process_csv_file(pool):
     """
