@@ -1,6 +1,8 @@
-from datetime import datetime
 import uuid
+from datetime import datetime
+
 from app.utils.logging import logger
+
 
 async def generate_boleto(debt):
     """
@@ -12,7 +14,11 @@ async def generate_boleto(debt):
         generated_at = datetime.now().isoformat()
 
         logger.info(f"Boleto generated for debt ID {str(debt['debt_id'])}")
-        return {"boleto_id": boleto_id, "barcode": barcode, "generated_at": generated_at}
+        return {
+            "boleto_id": boleto_id,
+            "barcode": barcode,
+            "generated_at": generated_at,
+        }
     except KeyError as e:
         logger.error(f"Missing key {e} in debt data: {debt}")
         raise

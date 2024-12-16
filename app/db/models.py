@@ -1,15 +1,18 @@
-from sqlalchemy import Column, String, Float, Date, Enum
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
 import uuid
 from enum import Enum as PyEnum
 
+from sqlalchemy import Column, Date, Enum, Float, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.declarative import declarative_base
+
 Base = declarative_base()
+
 
 class DebtStatus(PyEnum):
     PENDING = "PENDING"
     PROCESSED = "PROCESSED"
     FAILED = "FAILED"
+
 
 class Debt(Base):
     __tablename__ = "debt"

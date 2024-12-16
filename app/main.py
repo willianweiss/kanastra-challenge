@@ -1,17 +1,16 @@
 import asyncio
-from app.services.csv_processor import process_csv_file
-from fastapi import FastAPI, UploadFile, HTTPException, Query
+
 from asyncpg import create_pool
-from app.services.debt_service import (
-    save_to_database,
-    get_filtered_data,
-    update_record,
-    delete_record,
-)
-from app.db.models import Base
+from fastapi import FastAPI, HTTPException, Query, UploadFile
+
 from app.db.database import DATABASE_URL, TABLE_NAME, engine
+from app.db.models import Base
+from app.services.csv_processor import process_csv_file
+from app.services.debt_service import (delete_record, get_filtered_data,
+                                       save_to_database, update_record)
 
 pool = None
+
 
 async def lifespan(app: FastAPI):
     """
@@ -35,7 +34,9 @@ async def lifespan(app: FastAPI):
     engine.dispose()
     print("Database engine disposed.")
 
+
 app = FastAPI(lifespan=lifespan)
+
 
 @app.post("/upload-csv")
 async def upload_csv(file: UploadFile):
@@ -53,6 +54,7 @@ async def upload_csv(file: UploadFile):
 
     return {"message": "File uploaded and processing started"}
 
+
 @app.get("/debts")
 async def get_debts(
     debt_id: str = Query(None),
@@ -64,19 +66,23 @@ async def get_debts(
     debts = await get_filtered_data(pool, debt_id, status)
     return debts
 
+
 @app.put("/debts/{debt_id}")
 async def update_debt(debt_id: str, debt_update: dict):
     """
     PUT endpoint para atualizar uma dívida pelo ID.
     """
     if not debt_update:
-        raise HTTPException(status_code=400, detail="The update payload cannot be empty.")
+        raise HTTPException(
+            status_code=400, detail="The update payload cannot be empty."
+        )
 
     result = await update_record(pool, debt_id, debt_update)
     if not result:
         raise HTTPException(status_code=404, detail="Debt not found")
 
     return {"message": "Debt updated successfully"}
+
 
 @app.delete("/debts/{debt_id}")
 async def delete_debt(debt_id: str):

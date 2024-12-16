@@ -1,4 +1,5 @@
 import asyncio
+
 from app.db.models import DebtStatus
 from app.services.boleto_service import generate_boleto
 from app.services.email_service import send_email
@@ -6,6 +7,7 @@ from app.utils.logging import logger
 
 BATCH_SIZE = 100000
 MAX_WORKERS = 1000
+
 
 async def process_csv_file(pool):
     """
@@ -23,12 +25,13 @@ async def process_csv_file(pool):
         logger.info("No pending debts to process. Exiting.")
         return
 
-    batches = [debts[i:i + BATCH_SIZE] for i in range(0, len(debts), BATCH_SIZE)]
+    batches = [debts[i : i + BATCH_SIZE] for i in range(0, len(debts), BATCH_SIZE)]
 
     for batch in batches:
         await process_batch(batch, pool)
 
     logger.info("Debt processing completed.")
+
 
 async def process_batch(batch, pool):
     """
@@ -46,6 +49,7 @@ async def process_batch(batch, pool):
             [(DebtStatus.PROCESSED.value, debt_id) for debt_id in debt_ids],
         )
         logger.info(f"Updated {len(debt_ids)} debts to PROCESSED.")
+
 
 async def process_debt(debt, semaphore, pool):
     """

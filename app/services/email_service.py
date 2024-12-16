@@ -1,5 +1,6 @@
 from app.utils.logging import logger
 
+
 async def send_email(email, debt_id, boleto):
     """
     Simula o envio de e-mail com o boleto e gera logs detalhados.

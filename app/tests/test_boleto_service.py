@@ -1,7 +1,10 @@
-import pytest
 from datetime import datetime
 from unittest.mock import patch
+
+import pytest
+
 from app.services.boleto_service import generate_boleto
+
 
 @pytest.mark.asyncio
 async def test_generate_boleto_success():
@@ -24,7 +27,10 @@ async def test_generate_boleto_success():
         expected_barcode = f"{debt['debt_id'][:10]}-{float(debt['debt_amount']):.2f}-{debt['debt_due_date']}"
         assert boleto["barcode"] == expected_barcode
 
-        mock_logger.info.assert_called_once_with(f"Boleto generated for debt ID {debt['debt_id']}")
+        mock_logger.info.assert_called_once_with(
+            f"Boleto generated for debt ID {debt['debt_id']}"
+        )
+
 
 @pytest.mark.asyncio
 async def test_generate_boleto_missing_key():
@@ -40,8 +46,11 @@ async def test_generate_boleto_missing_key():
         with pytest.raises(KeyError) as exc_info:
             await generate_boleto(debt)
 
-        mock_logger.error.assert_called_once_with(f"Missing key 'debt_id' in debt data: {debt}")
+        mock_logger.error.assert_called_once_with(
+            f"Missing key 'debt_id' in debt data: {debt}"
+        )
         assert str(exc_info.value) == "'debt_id'"
+
 
 @pytest.mark.asyncio
 async def test_generate_boleto_invalid_data():
@@ -58,4 +67,6 @@ async def test_generate_boleto_invalid_data():
         with pytest.raises(ValueError) as exc_info:
             await generate_boleto(debt)
 
-        mock_logger.error.assert_called_once_with(f"Error generating boleto for debt: could not convert string to float: 'invalid'")
+        mock_logger.error.assert_called_once_with(
+            f"Error generating boleto for debt: could not convert string to float: 'invalid'"
+        )
