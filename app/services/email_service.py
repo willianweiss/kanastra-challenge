@@ -10,9 +10,7 @@ async def send_email(email, debt_id, boleto):
         boleto (dict): Dados do boleto, incluindo `boleto_id`, `barcode` e `generated_at`.
     """
     try:
-        logger.info(f"Preparing to send email to {email} for debt ID {debt_id}.")
-
-        logger.info(
+        boleto = {
             f"Email sent to {email}:\n"
             f"Subject: Boleto de pagamento - Dívida {debt_id}\n"
             f"Body:\n"
@@ -23,7 +21,8 @@ async def send_email(email, debt_id, boleto):
             f"Gerado em: {boleto['generated_at']}\n\n"
             f"Por favor, realize o pagamento antes da data de vencimento.\n\n"
             f"Atenciosamente,\nEquipe de Cobrança"
-        )
+        }
+        logger.info(f"Boleto generated to send email to {email} for debt ID {debt_id}.")
 
     except Exception as e:
         logger.error(f"Failed to simulate email to {email} for debt ID {debt_id}: {e}")

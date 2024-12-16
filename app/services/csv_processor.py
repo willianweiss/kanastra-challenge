@@ -4,7 +4,7 @@ from app.services.boleto_service import generate_boleto
 from app.services.email_service import send_email
 from app.utils.logging import logger
 
-BATCH_SIZE = 10000
+BATCH_SIZE = 100000
 MAX_WORKERS = 1000
 
 async def process_csv_file(pool):

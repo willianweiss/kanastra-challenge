@@ -47,7 +47,7 @@ async def save_to_database(content: bytes, table_name: str, pool):
         logger.error(f"Error while saving data: {e}")
         raise
 
-async def get_filtered_data(pool, name=None, government_id=None, email=None, status=None, min_amount=None, max_amount=None):
+async def get_filtered_data(pool, debt_id=None, status=None):
     """
     Busca dívidas com filtros opcionais.
     """
@@ -55,26 +55,15 @@ async def get_filtered_data(pool, name=None, government_id=None, email=None, sta
     conditions = []
     values = []
 
-    if name:
-        conditions.append("name ILIKE $1")
-        values.append(f"%{name}%")
-    if government_id:
-        conditions.append("government_id = $2")
-        values.append(government_id)
-    if email:
-        conditions.append("email ILIKE $3")
-        values.append(f"%{email}%")
+    if debt_id:
+        conditions.append("CAST(debt_id AS TEXT) ILIKE $1")
+        values.append(f"%{debt_id}%")
     if status:
-        conditions.append("status = $4")
+        conditions.append(f"status = ${len(values) + 1}")
         values.append(status)
-    if min_amount:
-        conditions.append("debt_amount >= $5")
-        values.append(min_amount)
-    if max_amount:
-        conditions.append("debt_amount <= $6")
-        values.append(max_amount)
 
-    query += " AND ".join(conditions)
+    if conditions:
+        query += " AND " + " AND ".join(conditions)
 
     async with pool.acquire() as conn:
         return await conn.fetch(query, *values)
@@ -83,6 +72,16 @@ async def update_record(pool, debt_id: str, debt_update: dict):
     """
     Atualiza um registro pelo ID.
     """
+    if not debt_update:
+        raise ValueError("debt_update cannot be empty")
+
+    for key, value in debt_update.items():
+        if "date" in key.lower() and isinstance(value, str):
+            try:
+                debt_update[key] = datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValueError(f"Invalid date format for field '{key}': {value}")
+
     set_clause = ", ".join([f"{key} = ${i+2}" for i, key in enumerate(debt_update.keys())])
     query = f"UPDATE debt SET {set_clause} WHERE debt_id = $1"
     values = [debt_id] + list(debt_update.values())

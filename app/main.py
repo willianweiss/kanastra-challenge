@@ -1,4 +1,5 @@
 import asyncio
+from app.services.csv_processor import process_csv_file
 from fastapi import FastAPI, UploadFile, HTTPException, Query
 from asyncpg import create_pool
 from app.services.debt_service import (
@@ -48,34 +49,33 @@ async def upload_csv(file: UploadFile):
 
     await save_to_database(content, TABLE_NAME, pool)
 
-    # Processamento assíncrono
     asyncio.create_task(process_csv_file(pool))
 
     return {"message": "File uploaded and processing started"}
 
 @app.get("/debts")
 async def get_debts(
-    name: str = Query(None),
-    government_id: str = Query(None),
-    email: str = Query(None),
+    debt_id: str = Query(None),
     status: str = Query(None),
-    min_amount: float = Query(None),
-    max_amount: float = Query(None)
 ):
     """
     GET endpoint para buscar dívidas com filtros.
     """
-    debts = await get_filtered_data(pool, name, government_id, email, status, min_amount, max_amount)
-    return {"debts": debts}
+    debts = await get_filtered_data(pool, debt_id, status)
+    return debts
 
 @app.put("/debts/{debt_id}")
 async def update_debt(debt_id: str, debt_update: dict):
     """
     PUT endpoint para atualizar uma dívida pelo ID.
     """
+    if not debt_update:
+        raise HTTPException(status_code=400, detail="The update payload cannot be empty.")
+
     result = await update_record(pool, debt_id, debt_update)
     if not result:
         raise HTTPException(status_code=404, detail="Debt not found")
+
     return {"message": "Debt updated successfully"}
 
 @app.delete("/debts/{debt_id}")
